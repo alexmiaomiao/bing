@@ -20,11 +20,11 @@ func bingText(res *jsonapi.SearchResult) {
 		Res *jsonapi.SearchResult
 		Verbose bool
 	}{res, *verbose}
-	
+
 	if err := templ.CommandLine.Execute(os.Stdout, s); err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
-	
+
 	complete <- 0
 }
 
