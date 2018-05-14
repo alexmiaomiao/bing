@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"github.com/bing/offline"
 )
 
 const bingURL = "http://xtk.azurewebsites.net/BingDictService.aspx"
@@ -47,6 +48,8 @@ func Search(terms []string) (*SearchResult, error) {
 	}
 
 	var result SearchResult
+	if offline.IsOffline
+	
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
