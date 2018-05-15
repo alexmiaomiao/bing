@@ -2,7 +2,9 @@ package jsonapi
 
 import (
 	"encoding/json"
+	"os"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -36,22 +38,35 @@ type SearchResult struct {
 }
 
 func Search(terms []string) (*SearchResult, error) {
-	q := url.QueryEscape(strings.Join(terms, " "))
-	resp, err := http.Get(bingURL + "?Word=" + q)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("search query failed: %s", resp.Status)
-	}
-
 	var result SearchResult
-	if offline.IsOffline
+
+	if _, err := offline.Open(strings.Join(terms, " "), "json"); err != nil {
 	
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
+		q := url.QueryEscape(strings.Join(terms, " "))
+		resp, err := http.Get(bingURL + "?Word=" + q)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("search query failed: %s", resp.Status)
+		}
+
+		if f, err := offline.Create(strings.Join(terms, " "), "json"); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		} else {
+			if d, err := ioutil.ReadAll(resp.Body); err == nil {
+				f.Write(d)
+				f.Close()
+			}
+		}
+	}
+
+	if f, err := offline.Open(strings.Join(terms, " "), "json"); err == nil {
+		if err := json.NewDecoder(f).Decode(&result); err != nil {
+			return nil, err
+		}	
 	}
 	
 	return &result, nil
