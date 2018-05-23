@@ -7,6 +7,8 @@ import (
 	"github.com/bing/jsonapi"
 	"github.com/bing/sox"
 	"github.com/bing/templ"
+	"github.com/bing/online"
+	"github.com/bing/offline"
 )
 
 var verbose = flag.Bool("v", false, "查看例句")
@@ -41,20 +43,38 @@ func bingSound(res *jsonapi.SearchResult) {
 	complete <- 0
 }
 
+func bingBackup(res *jsonapi.SearchResult) {
+	if err := offline.Backup(res); err != nil {
+		log.Print(err)
+	}
+
+	complete <- 0
+}
+
 func main() {
 	flag.Parse()
-	result, err := jsonapi.Search(flag.Args())
+	var result *jsonapi.SearchResult
+	var err1, err2 error
 	
-	if err != nil {
-		log.Fatal(err)
+	result, err1 = offline.Search(flag.Args())
+	if err1 != nil {
+		result, err2 = online.Search(flag.Args())
+	}
+	
+	if err1 != nil && err2 != nil {
+		log.Fatal(err1, err2)
 	}
 
 	if "" == result.Word {
 		log.Fatal("no such word")
 	}
-	
+
 	go bingText(result)
 	go bingSound(result)
+	if err1 != nil {
+		go bingBackup(result)
+		<- complete
+	}
 	
 	<- complete
 	<- complete

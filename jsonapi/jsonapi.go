@@ -2,16 +2,8 @@ package jsonapi
 
 import (
 	"encoding/json"
-	"os"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"strings"
-	"github.com/bing/offline"
+	"io"
 )
-
-const bingURL = "http://xtk.azurewebsites.net/BingDictService.aspx"
 
 type Pron struct {
 	AmE    string
@@ -37,37 +29,18 @@ type SearchResult struct {
 	Sams          []*Sample
 }
 
-func Search(terms []string) (*SearchResult, error) {
-	var result SearchResult
-
-	if _, err := offline.Open(strings.Join(terms, " "), "json"); err != nil {
-	
-		q := url.QueryEscape(strings.Join(terms, " "))
-		resp, err := http.Get(bingURL + "?Word=" + q)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("search query failed: %s", resp.Status)
-		}
-
-		if f, err := offline.Create(strings.Join(terms, " "), "json"); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		} else {
-			if d, err := ioutil.ReadAll(resp.Body); err == nil {
-				f.Write(d)
-				f.Close()
-			}
-		}
+func Decode(r io.Reader, s *SearchResult) error {
+	if err := json.NewDecoder(r).Decode(s); err != nil {
+		return err
+	} else {
+		return nil		
 	}
+}
 
-	if f, err := offline.Open(strings.Join(terms, " "), "json"); err == nil {
-		if err := json.NewDecoder(f).Decode(&result); err != nil {
-			return nil, err
-		}	
+func Encode(w io.Writer, s *SearchResult) error {
+	if err := json.NewEncoder(w).Encode(s); err != nil {
+		return err
+	} else {
+		return nil
 	}
-	
-	return &result, nil
 }
