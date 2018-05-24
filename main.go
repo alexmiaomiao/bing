@@ -4,6 +4,7 @@ import (
 	"log"
 	"flag"
 	"os"
+	"fmt"
 	"github.com/bing/jsonapi"
 	"github.com/bing/sox"
 	"github.com/bing/templ"
@@ -14,6 +15,7 @@ import (
 var verbose = flag.Bool("v", false, "查看例句")
 var ame = flag.Bool("a", false, "美式发音")
 var bre = flag.Bool("b", false, "美式发音")
+var list = flag.Int("l", 0, "查看历史单词")
 
 var complete chan int = make(chan int)
 
@@ -53,6 +55,21 @@ func bingBackup(res *jsonapi.SearchResult) {
 
 func main() {
 	flag.Parse()
+
+	if *list > 0 {
+		if dent, err := offline.ListWords(); err != nil {
+			log.Fatal(err)
+		} else {
+			l := len(dent) - *list
+			for i, w := range dent {
+				if i >= l {
+					fmt.Printf("%d\t%s\n", i+1, w.Name())
+				}
+			}
+			os.Exit(0)
+		}
+	}
+
 	var result *jsonapi.SearchResult
 	var err1, err2 error
 	

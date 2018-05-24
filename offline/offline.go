@@ -4,10 +4,18 @@ import (
 	"os"
 	"path"
 	"strings"
+	"io/ioutil"
+	"sort"
+	"time"
 	"github.com/bing/jsonapi"
 )
 
 var bingPath string
+
+type byMtime []os.FileInfo
+func (x byMtime) Len() int { return len(x) }
+func (x byMtime) Less(i, j int) bool { return x[i].ModTime().Before(x[j].ModTime()) }
+func (x byMtime) Swap(i, j int) { x[i], x[j] = x[j], x[i] }
 
 func init() {
 	if gp := os.Getenv("GOPATH"); gp != "" {
@@ -49,12 +57,14 @@ func Backup(s *jsonapi.SearchResult) error {
 }
 
 func Search(terms []string) (*jsonapi.SearchResult, error) {
-	q := strings.Join(terms, "_")
+	q := path.Join(bingPath, strings.Join(terms, "_"))
 
-	f, err :=os.Open(path.Join(bingPath, q))	
+	f, err :=os.Open(q)	
 	if err != nil {
 		return nil, err
 	}
+
+	defer os.Chtimes(q, time.Now(), time.Now())
 	defer f.Close()
 
 	var result jsonapi.SearchResult
@@ -62,5 +72,14 @@ func Search(terms []string) (*jsonapi.SearchResult, error) {
 		return nil, err
 	} else {
 		return &result, nil
+	}
+}
+
+func ListWords() ([]os.FileInfo, error) {
+	if dent, err := ioutil.ReadDir(bingPath); err != nil {
+		return nil, err
+	} else {
+		sort.Sort(byMtime(dent))
+		return dent, nil
 	}
 }

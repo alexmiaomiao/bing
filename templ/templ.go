@@ -5,7 +5,7 @@ import (
 )
 
 const t1 =
-`{{.Res.Word}}{{if .Res.Pronunciation}}		[美 {{.Res.Pronunciation.AmE}}]	[英 {{.Res.Pronunciation.BrE}}]{{end}}
+`{{.Res.Word}}{{if .Res.Pronunciation}}      [美 {{.Res.Pronunciation.AmE}}]  [英 {{.Res.Pronunciation.BrE}}]{{end}}
 -------------------------------------------------------------------------------------------
 {{range .Res.Defs}}{{.Pos}}		{{.Def}}
 {{end}}-------------------------------------------------------------------------------------------
